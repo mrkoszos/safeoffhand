@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${version}",
+  "name": "Safe Offhand",
+  "description": "Introduces lockable hotbar slots to prevent accidental offhanding.",
+  "authors": ["mrkoszos"],
+  "contact": {
+    "sources": "https://github.com/mrkoszos/safeoffhand",
+    "issues": "https://github.com/mrkoszos/safeoffhand/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/safeoffhand/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.mrkoszos.safeoffhand.client.SafeOffhandClient"
+    ],
+    "modmenu": [
+      "com.mrkoszos.safeoffhand.client.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "safeoffhand.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-api": "*",
+    "cloth-config": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}
