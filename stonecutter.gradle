@@ -29,6 +29,7 @@ tasks.register('collectJars', Sync) {
 tasks.register('verifyJars') {
 	group = 'verification'
 	dependsOn tasks.named('collectJars')
+	def modVersion = providers.gradleProperty("mod_version").get()
 	doLast {
 		subprojects.each { target ->
 			def obfuscated = target.minecraft_version.startsWith('1.')
@@ -40,7 +41,7 @@ tasks.register('verifyJars') {
 				def metadata = json.parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
 				def mixin = json.parse(zip.getInputStream(zip.getEntry('safeoffhand.client.mixins.json')))
 				assert metadata.id == 'safeoffhand'
-				assert metadata.version == '1.0.1'
+				assert metadata.version == modVersion
 				assert metadata.depends.minecraft == target.minecraft_version
 				assert metadata.depends.java == ">=${target.java_version}"
 				assert metadata.depends.fabricloader == ">=${target.loader_version}"
@@ -53,7 +54,7 @@ tasks.register('verifyJars') {
 				assert input.readInt() == (int) 0xCAFEBABE
 				input.readUnsignedShort()
 				assert input.readUnsignedShort() == target.java_version.toInteger() + 44
-				assert jarFile.name == "safeoffhand-1.0.1+mc${target.minecraft_version}.jar"
+				assert jarFile.name == "safeoffhand-${modVersion}+mc${target.minecraft_version}.jar"
 				logger.lifecycle("Verified ${jarFile.name}")
 			}
 		}
