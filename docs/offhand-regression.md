@@ -1,6 +1,8 @@
 # Issue #1 verification
 
-The project targets Minecraft 26.2 and Java 25. No applicable AGENTS.md was found.
+The original fix targeted Minecraft 26.2 and Java 25; the shared fix now builds for
+all nine targets listed in [Stonecutter development](multiversion.md).
+No applicable AGENTS.md was found.
 The issue URL could not be fetched in this session; the supplied reproduction was used.
 
 ## Inspected vanilla flow
@@ -33,7 +35,7 @@ PowerShell:
 ```powershell
 $env:JAVA_HOME = 'C:/Program Files/Java/jdk-25.0.2'
 $env:GRADLE_USER_HOME = 'C:/Users/User/.gradle'
-.\gradlew.bat offhandRegressionTest build --offline
+.\gradlew.bat :26.2:offhandRegressionTest :26.2:build --offline
 ```
 
 The dependency-free test runs the production guard in the mixin with real packet

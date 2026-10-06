@@ -23,6 +23,9 @@ Opening your inventory and using the offhand swap key on hovered items still wor
 
 ## Configuration
 
+For building, switching Minecraft versions and running regression tests, see
+[Stonecutter development](docs/multiversion.md).
+
 Safe Offhand can be configured through Mod Menu.
 
 You can configure:

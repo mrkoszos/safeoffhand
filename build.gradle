@@ -1,12 +1,16 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'dev.kikugie.loom-back-compat'
 	id 'maven-publish'
 }
 
 version = project.mod_version
-group = project.maven_group
+// Stonecutter uses the project group internally; publication declares its own groupId.
 
 def mcVersion = project.minecraft_version
+def requiredJava = project.java_version.toInteger()
+tasks.withType(AbstractArchiveTask).configureEach {
+	archiveVersion.set("${project.mod_version}+mc${mcVersion}")
+}
 
 base {
 	archivesName = project.archives_base_name
@@ -34,16 +38,16 @@ loom {
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 
-	// Minecraft 26.x uses the non-obfuscated setup.
-	// Do not add Yarn mappings here.
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	// Selects remap + Mojang mappings on 1.21.x, no mappings/remap on 26.x.
+	loomx.applyMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 	// Optional integration with Mod Menu.
-	api "com.terraformersmc:modmenu:${project.modmenu_version}"
+	modApi "com.terraformersmc:modmenu:${project.modmenu_version}"
 
 	// Configuration library.
-	api("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}") {
+	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_version}") {
 		exclude(group: "net.fabricmc.fabric-api")
 	}
 }
@@ -53,7 +57,10 @@ def resourceProperties = [
 	mod_id: project.mod_id,
 	minecraft_version: project.minecraft_version,
 	loader_version: project.loader_version,
-	java_version: project.java_version
+	java_version: project.java_version,
+	fabric_api_version: project.fabric_api_version,
+	cloth_version: project.cloth_version,
+	modmenu_version: project.modmenu_version
 ]
 
 tasks.named("processResources", ProcessResources) {
@@ -70,22 +77,24 @@ tasks.named("processClientResources", ProcessResources) {
 	filesMatching("fabric.mod.json") {
 		expand(resourceProperties)
 	}
+	filesMatching('*.mixins.json') {
+		expand(java_version: project.java_version)
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {
-	// Minecraft 26.x requires Java 25.
-	it.options.release = 25
+	it.options.release = requiredJava
 }
 
 java {
 	withSourcesJar()
 
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
+		languageVersion = JavaLanguageVersion.of(requiredJava)
 	}
 
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
+	sourceCompatibility = JavaVersion.toVersion(requiredJava)
+	targetCompatibility = JavaVersion.toVersion(requiredJava)
 }
 
 // Exercise the production swap guard with real Minecraft packets, without launching a client.
@@ -97,7 +106,7 @@ tasks.register('offhandRegressionTest', JavaExec) {
 	classpath = sourceSets.test.runtimeClasspath
 	mainClass = 'com.mrkoszos.safeoffhand.mixin.OffhandSwapRegressionTest'
 	javaLauncher = javaToolchains.launcherFor {
-		languageVersion = JavaLanguageVersion.of(25)
+		languageVersion = JavaLanguageVersion.of(requiredJava)
 	}
 }
 
@@ -109,10 +118,10 @@ tasks.named('test') {
 
 jar {
 	archiveBaseName.set(project.archives_base_name)
-	archiveVersion.set("${project.mod_version}-mc${mcVersion}")
+	archiveVersion.set("${project.mod_version}+mc${mcVersion}")
 	archiveClassifier.set("")
 
-	from("LICENSE") {
+	from(rootProject.file("LICENSE")) {
 		rename { "${it}_${project.archives_base_name}" }
 	}
 }
@@ -120,6 +129,7 @@ jar {
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
+			groupId = project.maven_group
 			artifactId = project.archives_base_name
 			from components.java
 		}
