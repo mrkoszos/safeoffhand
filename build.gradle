@@ -88,6 +88,25 @@ java {
 	targetCompatibility = JavaVersion.VERSION_25
 }
 
+// Exercise the production swap guard with real Minecraft packets, without launching a client.
+sourceSets.test.compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
+sourceSets.test.runtimeClasspath += sourceSets.client.output + sourceSets.client.runtimeClasspath
+
+tasks.register('offhandRegressionTest', JavaExec) {
+	dependsOn tasks.named('testClasses')
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.mrkoszos.safeoffhand.mixin.OffhandSwapRegressionTest'
+	javaLauncher = javaToolchains.launcherFor {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+tasks.named('test') {
+	// This dependency-free suite has a main entry point rather than JUnit annotations.
+	failOnNoDiscoveredTests = false
+	dependsOn tasks.named('offhandRegressionTest')
+}
+
 jar {
 	archiveBaseName.set(project.archives_base_name)
 	archiveVersion.set("${project.mod_version}-mc${mcVersion}")
